@@ -1,0 +1,23 @@
+#!/usr/bin/python3
+import time
+import serial
+import csv
+
+name = raw_input("Specify Serial Port")
+if name == "" || name == "\n"
+    name = '/dev/ttyACM0'
+
+ser = serial.Serial(port=name,baudrate=115200)  # open serial port
+print(ser.name)         # check which port was really used
+fileName = raw_input("specify filename (*.txt)")
+
+with open(fileName, mode = 'w') as outputFile:
+    try:
+        while(1 == 1):
+            output = ser.read_until()
+            print(output.decode("utf-8"))
+
+    except KeyboardInterrupt:
+        pass
+
+ser.close()             # close port
