@@ -11,7 +11,7 @@ import numpy as np
 import Queue
 
 
-printState = True
+printState = False
 def myPrint( string):
     if printState==True:
         print(string)
@@ -46,6 +46,7 @@ class SampleListener(Leap.Listener):
         print("Exited")
 
     def on_frame(self, controller):
+        data=[]
         # Get the most recent frame and report some basic information
         frame = controller.frame()
         time = frame.timestamp
@@ -59,12 +60,12 @@ class SampleListener(Leap.Listener):
                 angles = None
                 f = 0
                 for finger in hand.fingers: # should be 5
+                    #print("finger:{}".format(finger))
                     # Get bones
                     directions = 5
                     r = range(1,4) # Metacarpals are hard
                     #r.reverse()
                     myPrint("Finger {}  /////////////////////////////////".format(f))
-                    f = f +1
                     for b in r:
                         myPrint("Bone {} //////////////////////".format(b))
                         bone = finger.bone(b)
@@ -72,19 +73,22 @@ class SampleListener(Leap.Listener):
                             #boneDirectionList.append()
                             #directions = np.array(bone.direction.to_float_array()).reshape((1,3))
                             start = np.array(bone.prev_joint.to_float_array()).reshape((1,3))
-                            print("start: {}".format(start))
+                            #print("start: {}".format(start))
                             end = np.array(bone.next_joint.to_float_array()).reshape((1,3))
-                            print("end: {}".format(end))
+                            #print("end: {}".format(end))
                             directions = end-start
                             myPrint("directions {}".format(directions))
 
                         else:
                             #temp = np.array(bone.direction.to_float_array()).reshape((1,3))
                             start = np.array(bone.prev_joint.to_float_array()).reshape((1,3))
-                            print("start: {}".format(start))
                             end = np.array(bone.next_joint.to_float_array()).reshape((1,3))
                             temp = end-start
-                            print("end: {}".format(end))
+                            if f==1:
+                                print("start: {}".format(start))
+                                print("end: {}".format(end))
+                                print("temp {}".format(temp))
+                                data.append([start,end,temp])
                             directions = np.concatenate([directions,temp],axis=0)
                             myPrint("directions {}".format(directions))
                     myPrint("Finished bones //////////////////////".format(b))
@@ -111,6 +115,7 @@ class SampleListener(Leap.Listener):
                         myPrint("angleList {}".format(angleList))
                         temp = np.array(angleList).reshape(1,2)
                         angles = np.concatenate([angles,temp],axis=0)
+                    f = f +1
 
             # we now have a list of angles for each joint in the hand
             myPrint("shape of final matrix: {}+++++++++++++++++++++++++".format(angles.shape))
@@ -125,7 +130,8 @@ class SampleListener(Leap.Listener):
             #     print("leap no lock")
             # finally:
             #     self.internalLockVariable.release()
-            self.internalQueue.put([time,angles])
+            data.append(angles)
+            self.internalQueue.put(data)
 
 
         #if not (frame.hands.is_empty and frame.gestures().is_empty):
@@ -165,17 +171,14 @@ def main():
         while True:
             #print("Hi from main thread!")
             try:
-                data = q.get(block=False)
-                timeStamp = data[0]
-                print("timeStamp {}".format(timeStamp))
-                internalAngles = data[1]
-                fingers = ['thumb', 'fore','middle','ring','little']
-                for f in range(len(fingers)):
-                    print("{}:{}".format(fingers[f],internalAngles[f,:]))
-                #print(internalAngles)
+                data = q.get(block=True)
+                print("start: {}".format(data[0]))
+                print("end: {}".format(data[0]))
+                print("temp: {}".format(data[0]))
+                print("angles: {}".format(data[0]))
                 print("")
                 print("")
-                time.sleep(5)
+                time.sleep(1)
             except Queue.Empty:
                 #print("Nothing to see here....")
                 pass

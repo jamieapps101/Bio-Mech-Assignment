@@ -2,9 +2,9 @@
 import numpy as np
 
 
-a = np.array([0,0,1])
+a = np.array([0,1,1])
 b = np.array([0,1,0])
-aDotb = np.dot(a,b)
+aDotb = np.dot(-a,b)
 print("a*b :{}".format(aDotb))
 magProd = (np.linalg.norm(a)*np.linalg.norm(b))
 print("magProd :{}".format(magProd))
