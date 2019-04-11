@@ -1,0 +1,50 @@
+#!/bin/bash -e
+
+echo 'Leap Motion installed under /usr/bin and /usr/sbin'
+LSB_RELEASE=$(which lsb_release 2> /dev/null) || true
+if [ -n "${LSB_RELEASE}" ]; then
+  DISTID=$(lsb_release -id)
+fi
+
+if [[ -n "${LSB_RELEASE}" && -e /lib/init/upstart-job ]]; then
+  # Ubuntu
+  ln -s /lib/init/upstart-job /etc/init.d/leapd
+  UBUNTU_VERSION=$(lsb_release -r | cut -f 2)
+  USING_TRAY_WHITELIST=$(echo ${UBUNTU_VERSION} \< 13.04 | bc)
+  if [ "${USING_TRAY_WHITELIST}" -eq "1" ]; then
+    echo 'Allow Leap Motion in the system tray with the following command:'
+    echo '  gsettings set com.canonical.Unity.Panel systray-whitelist "$(gsettings get com.canonical.Unity.Panel systray-whitelist | sed -e "s/]$/, '"'LeapControlPanel'"']/")"'
+  fi
+elif [[ "${DISTID}" == *Debian* ]]; then
+  # Debian: create the init script to install leapd
+  sed -e 's/daemonexecutablename/leapd/g' \
+    -e 's/This file should be used to construct scripts to be/Description of the service/' \
+    -e '/# *placed in \/etc\/init\.d\./d' \
+    -e 's/Description of the service/Leap Motion daemon/g' \
+    -e 's/Example initscript/Leap Motion initscript/' \
+    -e 's/--options args//g' \
+    -e 's/--start --quiet/--start --background --quiet/g' \
+    -e 's/Foo Bar <foobar@baz.org>/Leap Motion Support <support@leapmotion.com>/g' \
+    -e 's/skeleton/leapd/g' \
+    -e '/Add code here, if necessary, that waits for the process to be ready/a  \ \ \ \ \ \ \ \ cat \/dev\/null \> \$PIDFILE \&\& pidof \$NAME \>\> \$PIDFILE' \
+    /etc/init.d/skeleton > /etc/init.d/leapd
+  chmod 755 /etc/init.d/leapd
+  update-rc.d -f leapd defaults
+fi
+
+if [[ -n "${LSB_RELEASE}" && -e /lib/init/upstart-job || "${DISTID}" == *Debian* ]]; then
+  service leapd start
+  echo 'Check Leap Motion daemon with:'
+  echo '  service leapd status'
+else
+  # other distros
+  echo 'To start the Leap Motion daemon, run:'
+  echo '  sudo leapd'
+  echo 'This does not appear to be an Debian or Ubuntu-compatible distro'
+  echo 'If you would like Leap Motion to run as a service, it is up to you'
+  echo 'to configure systemd or /etc/init.d appropriately.'
+fi
+
+echo 'Open the Leap Motion GUI with:'
+echo '  LeapControlPanel'
+echo 'See /usr/share/Leap/README.linux for more information.'

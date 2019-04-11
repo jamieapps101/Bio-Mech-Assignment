@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # to run this, run:
 # sudo leapd
-# sudo -H LeapControlPanel
-#
+# LeapControlPanel
+### try LeapControlPanel --showsettings if not working
 #
 
 # https://www.blog.pythonlibrary.org/2016/07/28/python-201-a-tutorial-on-threads/
@@ -22,15 +22,21 @@ print("Beginning")
 
 enableCollection = False
 leapMotionDetection = False
+q = Queue.LifoQueue(maxsize=1)
 
 def emgCallback(emg, moving, times=[]):
     with open(fileName, mode = 'a') as outputFile:
         writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         try:
+            leapData = q.get() # is this the last data, or the data put into the buffer initially, not read then everythning else was lost
+            rows,cols = leapData.shape
+            leapDataCols = []
+            for row in range(rows):
+                leapDataList.append(leapData[row,:])
             print(emg)
             writer.writerow(emg)
         except KeyboardInterrupt:
-            pass
+            exit()
 
 fileName = raw_input("specify filename (*.csv)")
 if fileName == "dummy":
@@ -48,9 +54,9 @@ rubbish = raw_input()
 m = MyoRaw(sys.argv[1] if len(sys.argv) >= 2 else None)
 m.add_emg_handler(emgCallback)
 print("Connecting to Myo Band")
+m.connect()
 # Create a leap listener and controller
 lock = threading.Lock()
-q = Queue.LifoQueue(maxsize=1)
 listener = SampleListener(lock,q)
 controller = Leap.Controller()
 controller.add_listener(listener)

@@ -11,7 +11,7 @@ import numpy as np
 import Queue
 
 
-printState = False
+printState = True
 def myPrint( string):
     if printState==True:
         print(string)
@@ -48,6 +48,7 @@ class SampleListener(Leap.Listener):
     def on_frame(self, controller):
         # Get the most recent frame and report some basic information
         frame = controller.frame()
+        time = frame.timestamp
         if (len(frame.hands) == 0):
             #print("please place hand in frame")
             pass
@@ -71,15 +72,19 @@ class SampleListener(Leap.Listener):
                             #boneDirectionList.append()
                             #directions = np.array(bone.direction.to_float_array()).reshape((1,3))
                             start = np.array(bone.prev_joint.to_float_array()).reshape((1,3))
+                            print("start: {}".format(start))
                             end = np.array(bone.next_joint.to_float_array()).reshape((1,3))
+                            print("end: {}".format(end))
                             directions = end-start
                             myPrint("directions {}".format(directions))
 
                         else:
                             #temp = np.array(bone.direction.to_float_array()).reshape((1,3))
                             start = np.array(bone.prev_joint.to_float_array()).reshape((1,3))
+                            print("start: {}".format(start))
                             end = np.array(bone.next_joint.to_float_array()).reshape((1,3))
                             temp = end-start
+                            print("end: {}".format(end))
                             directions = np.concatenate([directions,temp],axis=0)
                             myPrint("directions {}".format(directions))
                     myPrint("Finished bones //////////////////////".format(b))
@@ -95,7 +100,7 @@ class SampleListener(Leap.Listener):
                         myPrint("magProd :{}".format(magProd))
                         g = aDotb/magProd # G
                         myPrint("g at index {}:{}".format(d,g))
-                        angle = np.arccos(g)*180.0 # getAngle
+                        angle = np.arccos(g)*(180.0/3.14) # getAngle
 
                         myPrint("angle at index {}:{}".format(d,angle))
                         angleList.append(angle)
@@ -120,7 +125,7 @@ class SampleListener(Leap.Listener):
             #     print("leap no lock")
             # finally:
             #     self.internalLockVariable.release()
-            self.internalQueue.put(angles)
+            self.internalQueue.put([time,angles])
 
 
         #if not (frame.hands.is_empty and frame.gestures().is_empty):
@@ -158,12 +163,23 @@ def main():
         global globalAngles
         internalAngles = None
         while True:
-            print("Hi from main thread!")
+            #print("Hi from main thread!")
             try:
-                internalAngles = q.get(block=False)
-                print(internalAngles)
+                data = q.get(block=False)
+                timeStamp = data[0]
+                print("timeStamp {}".format(timeStamp))
+                internalAngles = data[1]
+                fingers = ['thumb', 'fore','middle','ring','little']
+                for f in range(len(fingers)):
+                    print("{}:{}".format(fingers[f],internalAngles[f,:]))
+                #print(internalAngles)
+                print("")
+                print("")
+                time.sleep(5)
             except Queue.Empty:
-                print("Nothing to see here....")
+                #print("Nothing to see here....")
+                pass
+
             time.sleep(0.5)
     except KeyboardInterrupt:
         print("time to go to sleep!")

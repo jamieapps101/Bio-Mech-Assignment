@@ -1,0 +1,10 @@
+Package: leap
+Version: 2.3.1+31549
+Section: Utilities
+Priority: optional
+Architecture: amd64
+Depends: libc6 (>= 2.15-0), libgl1-mesa-glx (>= 7.7.1) | libgl1-mesa-glx-lts-precise (>= 7.7.1) | libgl1-mesa-glx-lts-quantal (>= 7.7.1) | libgl1-mesa-glx-lts-raring (>= 7.7.1) | libgl1-mesa-glx-lts-saucy (>= 7.7.1) | libgl1-mesa-glx-lts-trusty (>= 7.7.1) | libgl1-mesa-glx-lts-utopic (>= 7.7.1) | libgl1-mesa-glx-lts-vivid (>= 7.7.1), libglu1-mesa (>= 7.7.1), libxi6 (>= 2:1.3-3), libxxf86vm1 (>= 1:1.1.0-2), libdbus-1-3 (>= 1.0.2)
+Installed-Size: 244277
+Maintainer: Leap Motion Support <support@leapmotion.com>
+Description: Leap Motion Debian package
+

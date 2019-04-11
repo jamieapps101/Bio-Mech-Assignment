@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+service leapd stop || true
+killall LeapControlPanel Visualizer Recalibrate 2> /dev/null || true

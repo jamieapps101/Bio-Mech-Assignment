@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+LSB_RELEASE=$(which lsb_release 2> /dev/null) || true
+if [ -n "${LSB_RELEASE}" ]; then
+  CODENAME=$(lsb_release -cs)
+  DISTID=$(lsb_release -id)
+fi
+if [ "${CODENAME}" == "debian" -o "${DISTID}" == "Debian" ]; then
+  if [ ! -e /lib/init/upstart-job ]; then
+    update-rc.d -f leapd remove
+  fi
+fi
+if [ -n "${LSB_RELEASE}" -a -e /lib/init/upstart-job -o "${CODENAME}" == "debian" -o "${DISTID}" == "Debian" ]; then
+  rm -vf /etc/init.d/leapd
+fi

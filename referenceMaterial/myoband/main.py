@@ -6,7 +6,7 @@ import csv
 
 m = MyoRaw(sys.argv[1] if len(sys.argv) >= 2 else None)
 
-fileName = input("specify filename (*.csv)")
+fileName = raw_input("specify filename (*.csv)")
 if fileName == "" or fileName == "\n":
     fileName = 'output'
 fileName += ".csv"
