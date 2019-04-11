@@ -34,7 +34,8 @@ def emgCallback(emg, moving, times=[]):
             for row in range(rows):
                 leapDataList.append(leapData[row,:])
             print(emg)
-            writer.writerow(emg)
+            print("emg type: {}".format(type(emg)))
+            #writer.writerow(emg)
         except KeyboardInterrupt:
             exit()
 

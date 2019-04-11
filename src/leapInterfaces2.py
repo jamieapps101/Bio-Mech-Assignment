@@ -129,7 +129,7 @@ def main():
                 data = q.get(block=True)
                 print("Hand data:")
                 print(data)
-            except Empty:
+            except Queue.Empty:
                 pass
 
     except KeyboardInterrupt:
