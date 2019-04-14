@@ -37,6 +37,23 @@ fileName += ".csv"
 fileName = "trainingData/" + fileName
 
 
+writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+dataLabels = []
+for a in range(8):
+    dataLabels.append("emg"+str(a))
+
+finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+#bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+bone_names = ['Proximal', 'Intermediate', 'Distal'] # 3 angles are calculated, which are considered to be at the bases of each bone
+for a in finger_names:
+    for b in bone_names:
+        dataLabels.append(a+"_"+b)
+
+
+
+writer.writerow(dataToWrite)
+
+
 def proc_emg(emg, moving, times=[]):
     if True:
         try:
