@@ -106,6 +106,7 @@ class SampleListener(Leap.Listener):
                                 handAngles = fingerJointAngles
                         try:
                             self.internalQueue.put(handAngles,block=False)
+                            #print("send data to queue!")
                         except Queue.Full:
                             pass
 
@@ -129,7 +130,7 @@ def main():
                 data = q.get(block=True)
                 print("Hand data:")
                 print(data)
-            except Queue.Empty:
+            except QueueEmpty:
                 pass
 
     except KeyboardInterrupt:
