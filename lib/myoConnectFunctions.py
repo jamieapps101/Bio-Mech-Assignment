@@ -180,6 +180,7 @@ class MyoRaw(object):
         self.imu_handlers = []
         self.arm_handlers = []
         self.pose_handlers = []
+        #self.dataCount = 0
 
     def detect_tty(self):
         for p in comports():

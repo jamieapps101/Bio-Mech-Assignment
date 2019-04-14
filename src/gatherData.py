@@ -32,31 +32,41 @@ if fileName == "dummy":
 else:
     if fileName == "" or fileName == "\n":
         fileName = 'output'
-        fileName += ".csv"
 
+fileName += ".csv"
 fileName = "trainingData/" + fileName
+
 
 def proc_emg(emg, moving, times=[]):
     if True:
         try:
             leapData = None
+            gotData = False
             try:
                 ######### Put a time out on everything!!!!
-                leapData = q.get() # is this the last data, or the data put into the buffer initially, not read then everythning else was lost
+                leapData = q.get_nowait() # is this the last data, or the data put into the buffer initially, not read then everythning else was lost
+                gotData = True
             except Queue.Empty:
-                print("Hmm leap q has no data")
+                print("No hand recognised, data collection paused")
                 pass
-            if(type(leapData) == type(np.array([1]))):
+
+            if(gotData == True):
                 rows,cols = leapData.shape
                 leapDataList = []
                 for row in range(rows):
                     leapDataList += list(leapData[row,:])
                 emgDataList = list(emg)
                 dataToWrite = emgDataList+leapDataList
-                print("Data:{}".format(dataToWrite))
+                print("Sampling....")
+                #print("Data:{}".format(dataToWrite))
+                #self.dataCount += 1
+                #if (self.dataCount%100 == 0):
+                    #print("{} Samples".format(self.dataCount))
                 with open(fileName, mode = 'a') as outputFile:
                     writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow(dataToWrite)
+            #else:
+                #print("gotData = false")
         except KeyboardInterrupt:
                 exit()
 
