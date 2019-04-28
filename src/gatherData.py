@@ -19,6 +19,8 @@ from myoConnectFunctions import *
 import csv
 sys.path.insert(0, "../lib")
 import Leap
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 print("Beginning")
 
@@ -31,30 +33,31 @@ if fileName == "dummy":
     print("running dummy session, no csv output")
 else:
     if fileName == "" or fileName == "\n":
-        fileName = 'output'
+        fileName = 'outputLong'
 
 fileName += ".csv"
 fileName = "trainingData/" + fileName
 
 
-writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-dataLabels = []
-for a in range(8):
-    dataLabels.append("emg"+str(a))
+with open(fileName, "w") as outputFile:
+    writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    dataLabels = []
+    for a in range(8):
+        dataLabels.append("emg"+str(a))
 
-finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-#bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
-bone_names = ['Proximal', 'Intermediate', 'Distal'] # 3 angles are calculated, which are considered to be at the bases of each bone
-for a in finger_names:
-    for b in bone_names:
-        dataLabels.append(a+"_"+b)
+    finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+    #bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+    bone_names = ['Proximal', 'Intermediate', 'Distal'] # 3 angles are calculated, which are considered to be at the bases of each bone
+    for a in finger_names:
+        for b in bone_names:
+            dataLabels.append(a+"_"+b)
+    writer.writerow(dataLabels)
 
-
-
-writer.writerow(dataToWrite)
-
+# averageList = []
+sampleCounter = 0
 
 def proc_emg(emg, moving, times=[]):
+    global sampleCounter
     if True:
         try:
             leapData = None
@@ -66,7 +69,6 @@ def proc_emg(emg, moving, times=[]):
             except Queue.Empty:
                 print("No hand recognised, data collection paused")
                 pass
-
             if(gotData == True):
                 rows,cols = leapData.shape
                 leapDataList = []
@@ -74,16 +76,21 @@ def proc_emg(emg, moving, times=[]):
                     leapDataList += list(leapData[row,:])
                 emgDataList = list(emg)
                 dataToWrite = emgDataList+leapDataList
-                print("Sampling....")
-                #print("Data:{}".format(dataToWrite))
-                #self.dataCount += 1
-                #if (self.dataCount%100 == 0):
-                    #print("{} Samples".format(self.dataCount))
+                # currentAve = np.mean(leapDataList[1:])
+                # averageList.append(currentAve)
+                # if sampleCounter == 99:
+                #     sampleCounter = 0
+                #     sns.distplot(averageList);
+                #     plt.show(block=False)
+                #     print("currentAve:{}".format(currentAve))
+                # else:
+                sampleCounter += 1
+                print("Sample: {}".format(sampleCounter))
                 with open(fileName, mode = 'a') as outputFile:
                     writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow(dataToWrite)
-            #else:
-                #print("gotData = false")
+            else:
+                print("can't get a handle on that hand!")
         except KeyboardInterrupt:
                 exit()
 
@@ -124,6 +131,7 @@ try:
 #            print("Nothing to see here....")
 #        time.sleep(0.5)
 except KeyboardInterrupt:
+    plt.show()
     print("time to go to sleep!")
 finally:
     # Remove the sample listener when done
