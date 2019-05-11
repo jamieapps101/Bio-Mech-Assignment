@@ -28,20 +28,33 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint("kerasModels/cp.ckpt",
                                                  verbose=1)
 
 def plot_history(histories, key='binary_crossentropy'):
-  plt.figure(1)
+    plt.figure(1)
 
-  for name, history in histories:
-    val = plt.plot(history.epoch, history.history['val_'+key],
-                   '--', label=name.title()+' Val')
-    plt.plot(history.epoch, history.history[key], color=val[0].get_color(),
-             label=name.title()+' Train')
+    for name, history in histories:
+        val = plt.plot(history.epoch, history.history['acc'],
+                      '--', label=name.title()+' Val')
 
-  plt.xlabel('Epochs')
-  plt.ylabel(key.replace('_',' ').title())
-  plt.legend()
+    plt.xlabel('Epochs')
+    # plt.ylabel(key.replace('_',' ').title())
+    plt.ylabel("acc")
+    plt.legend()
+    plt.xlim([0,max(history.epoch)])
+    plt.grid(which="both")
 
-  plt.xlim([0,max(history.epoch)])
+    plt.figure(2)
+    for name, history in histories:
+        val = plt.plot(history.epoch, history.history['val_'+key],
+                     '--', label=name.title()+' Val')
+        plt.plot(history.epoch, history.history[key], color=val[0].get_color(),
+               label=name.title()+' Train')
+        # plt.plot(history.epoch, , color='g',
+        #     label=name.title()+' Train')
 
+    plt.xlabel('Epochs')
+    plt.ylabel(key.replace('_',' ').title())
+    plt.legend()
+    plt.xlim([0,max(history.epoch)])
+    plt.grid(which="both")
 
 
 
@@ -223,19 +236,35 @@ def main(argv):
     model1 = keras.Sequential([
         #keras.layers.Flatten(input_shape=(1, 8)),
         keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
         keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
         keras.layers.Dense(2, activation=tf.nn.softmax)
     ])
 
     model2 = keras.Sequential([
-        #keras.layers.Flatten(input_shape=(1, 8)),
-        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
         keras.layers.Dense(2, activation=tf.nn.softmax)
     ])
@@ -248,14 +277,14 @@ def main(argv):
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy','binary_crossentropy'])
     #model1.summary()
-    history1 = model1.fit(train_x, train_y, epochs=150,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
-    history2 = model2.fit(train_x, train_y, epochs=150,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+    history1 = model1.fit(train_x, train_y, epochs=600,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+    history2 = model2.fit(train_x, train_y, epochs=600,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
 
     plot_history([('model1', history1),('model2', history2)])
-    test_loss, test_acc, bin_cross = model1.evaluate(test_x, test_y)
-    print("model1: {} ".format(test_acc))
-    test_loss, test_acc, bin_cross = model2.evaluate(test_x, test_y)
-    print("model2: {} ".format(test_acc))
+    #test_loss, test_acc, bin_cross = model1.evaluate(test_x, test_y)
+    #print("model1: {} ".format(test_acc))
+    #test_loss, test_acc, bin_cross = model2.evaluate(test_x, test_y)
+    #print("model2: {} ".format(test_acc))
     plt.show()
 
 
