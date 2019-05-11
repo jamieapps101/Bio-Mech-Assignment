@@ -251,19 +251,32 @@ def main(argv):
     ])
 
     model2 = keras.Sequential([
-        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(60, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dense(2, activation=tf.nn.softmax)
+    ])
+
+    model3 = keras.Sequential([
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.001), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.001),activation=tf.nn.softmax),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.001),activation=tf.nn.relu),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(120, kernel_regularizer=keras.regularizers.l2(0.001),activation=tf.nn.relu),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
         keras.layers.Dense(2, activation=tf.nn.softmax)
@@ -276,11 +289,16 @@ def main(argv):
     model2.compile(optimizer='adam',
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy','binary_crossentropy'])
-    #model1.summary()
-    history1 = model1.fit(train_x, train_y, epochs=600,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
-    history2 = model2.fit(train_x, train_y, epochs=600,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
 
-    plot_history([('model1', history1),('model2', history2)])
+    model3.compile(optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy','binary_crossentropy'])
+    #model1.summary()
+    history1 = model1.fit(train_x, train_y, epochs=10,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+    history2 = model2.fit(train_x, train_y, epochs=10,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+    history3 = model3.fit(train_x, train_y, epochs=800,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+
+    plot_history([('model1', history1),('model2', history2),('model3', history3)])
     #test_loss, test_acc, bin_cross = model1.evaluate(test_x, test_y)
     #print("model1: {} ".format(test_acc))
     #test_loss, test_acc, bin_cross = model2.evaluate(test_x, test_y)
