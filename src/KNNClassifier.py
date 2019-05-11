@@ -69,25 +69,17 @@ class KNNClassifier:
             print("KNN Classify called with no reference data input")
             return None
         else:
-            #print("inputx: \n{}".format(inputx))
-            #print("self.refDataX: \n{}".format(self.refDataX))
             differences = np.subtract(self.refDataX,inputx)
-            #print("differences: \n{}".format(differences))
             squared_differences = np.power(differences,2)
-            #print("squared_differences: \n{}".format(squared_differences))
             summed_squared_differences = np.sum(squared_differences,axis=1).reshape(len(squared_differences),1)
-            #print("summed_squared_differences: \n{}".format(summed_squared_differences))
             totalDataSet=np.append(summed_squared_differences,self.refDataY.reshape(len(self.refDataY),1),axis=1)
-            #print("totalDataSet: \n{}".format(totalDataSet))
             totalDataSet = pd.DataFrame(data=totalDataSet,columns=["diff","class"])
             #exit()
             sortedData = totalDataSet.sort_values(by="diff",axis=0)
             sortedData = sortedData.values
-            topSortedResult=sortedData[:1,:]# take top 100 closest points
-            #print("topSortedResult: \n{}".format(topSortedResult))
+            topSortedResult=sortedData[:10,:]# take top 10 closest points
             res = np.histogram(topSortedResult[:,1],bins=(0,0.5,1),density=True)
             res = res[0]
-            #print("Res: \n{}".format(res))
             dist = res/np.sum(res)
             probClassA,probClassB = dist[0],dist[1]
             if probClassA > probClassB:
@@ -98,7 +90,7 @@ class KNNClassifier:
 def main():
         dataX,dataY = amalgamateData() # maybe search through .csv files in trainingData folder
         dataX,dataY = processData(dataX,dataY)
-        proportionTrain = 4/5
+        proportionTrain = 99/100
         #print("proportionTrain type: {}".format(type(proportionTrain)))
         length,width = dataX.shape
         trainIndex = int(length*proportionTrain)
@@ -110,7 +102,9 @@ def main():
         test_x = dataX[trainIndex:,:]
         test_y = dataY[trainIndex:]
         classifier = KNNClassifier()
+        print("importing training data")
         classifier.setReferenceData(train_x,train_y)
+        print("running {} samples".format(len(test_x)))
         # results
         AC0PC0 = 0
         AC0PC1 = 0
