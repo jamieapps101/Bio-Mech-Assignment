@@ -11,6 +11,7 @@
 
 import argparse
 import tensorflow as tf
+from tensorflow import keras
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -21,6 +22,27 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=10000, type=int, help='batch size')
 parser.add_argument('--train_steps', default=100, type=int,
                     help='number of training steps')
+
+cp_callback = tf.keras.callbacks.ModelCheckpoint("kerasModels/cp.ckpt",
+                                                 save_weights_only=True,
+                                                 verbose=1)
+
+def plot_history(histories, key='binary_crossentropy'):
+  plt.figure(1)
+
+  for name, history in histories:
+    val = plt.plot(history.epoch, history.history['val_'+key],
+                   '--', label=name.title()+' Val')
+    plt.plot(history.epoch, history.history[key], color=val[0].get_color(),
+             label=name.title()+' Train')
+
+  plt.xlabel('Epochs')
+  plt.ylabel(key.replace('_',' ').title())
+  plt.legend()
+
+  plt.xlim([0,max(history.epoch)])
+
+
 
 
 def amalgamateData(files=["outputLong01.csv"]):
@@ -53,9 +75,9 @@ def processData(x,y):
     print("mean angle: {}".format(y.mean()))
     print("median angle: {}".format(np.median(y)))
     print("mode angle: {}".format(stats.mode(y)))
-    plt.figure(1)
-    sns.distplot(y)
-#    return x,y
+    #plt.figure(1)
+    #sns.distplot(y) # for plotting initial data distribution
+    #return x,y
     yMax = np.max(y)
     y = np.divide(y,yMax) # normalise
     bins = 10
@@ -94,8 +116,8 @@ def processData(x,y):
     print("newData distplot shape; {}".format(newData[:,8].shape))
     print("newData example: \n{}".format(newData[:4,:]))
     print("classification mean: {}".format(np.mean(newData[:,8])))
-    plt.figure(2)
-    sns.distplot(newData[:,8])
+    #plt.figure(2)
+    # sns.distplot(newData[:,8]) # for fitting corrected distribution
     #plt.show()
     x = newData[:,:8]
     y = newData[:,8:]
@@ -109,8 +131,6 @@ def processData(x,y):
     y = np.array(newY)
     return x,y
     # exit()
-
-
 
 def train_input_fn(features, labels, batch_size): #"""An input function for training"""
     # Convert the inputs to a Dataset.
@@ -160,7 +180,7 @@ def main(argv):
 
     #plt.show()
     #exit()
-    proportionTrain = 19/20
+    proportionTrain = 16/20
     print("proportionTrain type: {}".format(type(proportionTrain)))
     length,width = dataX.shape
     trainIndex = int(length*proportionTrain)
@@ -182,34 +202,64 @@ def main(argv):
 #                [50,50],[100,100],[200,200],[250,250],[300,300],[400,400]]
 #                [0.685063, 0.68686265, 0.68326336, 0.71025795, 0.69526094, 0.7006599, 0.69286144, 0.7024595, 0.7132574, 0.7132574, 0.71385723, 0.72645473, 0.7306539, 0.7396521, 0.7324535, 0.73425317]
 
-    structures = [[250,250]]
-    accuracies = []
-    epochs = [10,20,50,100,150,200,300,400,500,600,800,1000,1500]
-    for epoch in epochs:
-        for structure in structures:
+
             #structure = [300]
-            classifier = tf.estimator.DNNClassifier(
-            feature_columns=my_feature_columns,
-            hidden_units=structure,
-            n_classes=2,
-            #model_dir='neuralNetdata'
-            )
 
-            a=classifier.train(input_fn=lambda:train_input_fn(train_x, train_y, args.batch_size),steps=epoch)
-
-            eval_result = classifier.evaluate(
-                input_fn=lambda:eval_input_fn(test_x, test_y,
-                                                        args.batch_size))
-            val = eval_result["accuracy"]
-            accuracies.append(val)
-            print('\nTest set accuracy: {}\n'.format(val))
-
-        # eval_result2 = classifier.evaluate(
-        #     input_fn=lambda:eval_input_fn(train_x, train_y,
+        # classifier = tf.estimator.DNNClassifier(
+        # feature_columns=my_feature_columns,
+        # hidden_units=structure,
+        # n_classes=2,
+        # #model_dir='neuralNetdata'
+        # )
+        #
+        # a=classifier.train(input_fn=lambda:train_input_fn(train_x, train_y, args.batch_size),steps=epoch)
+        #
+        # eval_result = classifier.evaluate(
+        #     input_fn=lambda:eval_input_fn(test_x, test_y,
         #                                             args.batch_size))
-        # val = eval_result2["accuracy"]
-        # print('\ntrain set accuracy: {}\n'.format(val))
-    print("Accuracies: \n {}".format(accuracies))
+        # val = eval_result["accuracy"]
+        # accuracies.append(val)
+        # print('\nTest set accuracy: {}\n'.format(val))
+    model1 = keras.Sequential([
+        #keras.layers.Flatten(input_shape=(1, 8)),
+        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(2, activation=tf.nn.softmax)
+    ])
+
+    model2 = keras.Sequential([
+        #keras.layers.Flatten(input_shape=(1, 8)),
+        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(150, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(2, activation=tf.nn.softmax)
+    ])
+
+    model1.compile(optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy','binary_crossentropy'])
+
+    model2.compile(optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy','binary_crossentropy'])
+    #model1.summary()
+    history1 = model1.fit(train_x, train_y, epochs=150,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+    history2 = model2.fit(train_x, train_y, epochs=150,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
+
+    plot_history([('model1', history1),('model2', history2)])
+    test_loss, test_acc, bin_cross = model1.evaluate(test_x, test_y)
+    print("model1: {} ".format(test_acc))
+    test_loss, test_acc, bin_cross = model2.evaluate(test_x, test_y)
+    print("model2: {} ".format(test_acc))
+    plt.show()
+
+
+
 
 
 
