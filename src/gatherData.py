@@ -9,6 +9,17 @@
 
 # myo connect came from: http://www.fernandocosentino.net/pyoconnect/
 
+# ave sample freq: 52.0070258816
+# std dev: 0.00443972074748
+
+# plan of action
+# independently sample myo and leapmotion
+# produce script to go though slower sampled sensor, combine with data from high sampled sensor using linear interpolation
+# pass through fft with window of 0.2-3.0 seconds
+# output new data
+# train neural net
+
+import pandas as pd
 import threading
 import sys, time, thread
 import math
@@ -21,84 +32,45 @@ sys.path.insert(0, "../lib")
 import Leap
 # import seaborn as sns
 # import matplotlib.pyplot as plt
+#
+# sampleTimesOriginal = []
+# samples = 0
+#
+# print("Beginning")
+#
+# enableCollection = True
+# leapMotionDetection = False
+# q = Queue.LifoQueue(maxsize=1)
+#
+# myoFileName = "trainingData/myoOutput.csv"
+# leapFilename = "trainingData/leapOutput.csv"
+# with open(myoFileName, "w+") as outputFile:
+#     writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+#     dataLabels = []
+#     for a in range(8):
+#         dataLabels.append("emg"+str(a))
+#     writer.writerow(dataLabels)
 
-print("Beginning")
-
-enableCollection = False
-leapMotionDetection = False
-q = Queue.LifoQueue(maxsize=1)
-
-fileName = raw_input("specify filename (*.csv)")
-if fileName == "dummy":
-    print("running dummy session, no csv output")
-else:
-    if fileName == "" or fileName == "\n":
-        fileName = 'outputLong'
-
-fileName += ".csv"
-fileName = "trainingData/" + fileName
 
 
-with open(fileName, "w") as outputFile:
-    writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    dataLabels = []
-    for a in range(8):
-        dataLabels.append("emg"+str(a))
-
-    finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
-    #bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
-    bone_names = ['Proximal', 'Intermediate', 'Distal'] # 3 angles are calculated, which are considered to be at the bases of each bone
-    for a in finger_names:
-        for b in bone_names:
-            dataLabels.append(a+"_"+b)
-    writer.writerow(dataLabels)
 
 # averageList = []
 sampleCounter = 0
+dataStore = []
 
 def proc_emg(emg, moving, times=[]):
+    global dataStore
     global sampleCounter
-    if True:
-        try:
-            leapData = None
-            gotData = False
-            try:
-                ######### Put a time out on everything!!!!
-                leapData = q.get_nowait() # is this the last data, or the data put into the buffer initially, not read then everythning else was lost
-                gotData = True
-            except Queue.Empty:
-                print("No hand recognised, data collection paused")
-                pass
-            if(gotData == True):
-                rows,cols = leapData.shape
-                leapDataList = []
-                for row in range(rows):
-                    leapDataList += list(leapData[row,:])
-                emgDataList = list(emg)
-                dataToWrite = emgDataList+leapDataList
-                # currentAve = np.mean(leapDataList[1:])
-                # averageList.append(currentAve)
-                # if sampleCounter == 99:
-                #     sampleCounter = 0
-                #     sns.distplot(averageList);
-                #     plt.show(block=False)
-                #     print("currentAve:{}".format(currentAve))
-                # else:
-                sampleCounter += 1
-                print("Sample: {}".format(sampleCounter))
-                with open(fileName, mode = 'a') as outputFile:
-                    writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow(dataToWrite)
-            else:
-                print("can't get a handle on that hand!")
-        except KeyboardInterrupt:
-                exit()
-
-print("Please put on myo band, and place hand above leapmotion sensor")
-print("if leap motion cannot properly track hand, recording will be ")
-print("paused and automatically resumed on recognition. Press enter")
-print("when ready to connect")
-rubbish = raw_input()
+    #print("myo running")
+    sampleCounter+= 1
+    dataStore.append(list(emg))
+#
+#
+# print("Please put on myo band, and place hand above leapmotion sensor")
+# print("if leap motion cannot properly track hand, recording will be ")
+# print("paused and automatically resumed on recognition. Press enter")
+# print("when ready to connect")
+# rubbish = raw_input()
 
 # Myo setup
 m = MyoRaw(sys.argv[1] if len(sys.argv) >= 2 else None)
@@ -106,33 +78,85 @@ m.add_emg_handler(proc_emg)
 print("Connecting to Myo Band")
 m.connect()
 print("Myo Connected")
-
-
-# leap setup
-lock = threading.Lock()
-listener = SampleListener(lock,q)
-controller = Leap.Controller()
-controller.add_listener(listener)
+#
+#
+# # leap setup
+# lock = threading.Lock()
+# listener = SampleListener(lock,q)
+# controller = Leap.Controller()
+# controller.add_listener(listener)
 
 # Keep this process running until Enter is pressed
 print("Press Enter to quit...")
+init = time.time()
 try:
-    internalAngles = None
     while True:
-        #start = time.time()
         m.run(1)
-        #end = time.time()
-        #print("F {}".format(1/(end-start)))
-        #print("Hi from main thread!")
-        #try:
-    #        internalAngles = q.get(block=False)
-    #        print(internalAngles)
-    #    except Queue.Empty:
-#            print("Nothing to see here....")
-#        time.sleep(0.5)
+        if len(dataStore) >= 100:
+            temp = dataStore
+            # with open(myoFileName, mode = 'a') as outputFile:
+            #     writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            #     for data in temp:
+            #         writer.writerow(data)
+
 except KeyboardInterrupt:
-    plt.show()
-    print("time to go to sleep!")
+    print("\ntime to go to sleep!")
+    stop = time.time()
+    duration = stop - init
+    print("{}".format(sampleCounter) + " myo samples in {}ms".format(int(duration*1000)))
 finally:
-    # Remove the sample listener when done
-    controller.remove_listener(listener)
+    pass
+    #controller.remove_listener(listener)
+
+
+# now to process the data
+def aveFreq(data):
+    myoTimes = data[:,0]
+    myoTimes = np.diff(myoTimes)
+    myoTimes = [time for time in myoTimes if time < (myoTimes.mean()+2*myoTimes.std()) and time > (myoTimes.mean()-2*myoTimes.std())] # remove top and bottom 2.2% of values
+    myoAveSampleTimes = np.array(myoTimes).mean()
+    myoAveFreq = 1/(myoAveSampleTimes * 1000)
+    return myoAveFreq
+
+myoData = pd.read_csv("trainingData/myoOutput.csv")
+myoFs = aveFreq(myoData)
+print("Myo average sampling freq = {}Hz".format(myoFs))
+leapData = pd.read_csv("trainingData/leapOutput.csv")
+leapFs = aveFreq(leapData)
+print("Myo average sampling freq = {}Hz".format(leapFs))
+#
+# combinedData = []
+#
+# def interpolateData(preserveTime, superSample):
+#     combinedData = []
+#     leapData = preserveTime
+#     myoData = superSample
+#     for leapRow in leapData:
+#         leapRowTime = leapRow[0]
+#         myoRowCount,myoColCount = myoData.shape
+#         for rowIndex in (range(myoRowCount)-1):
+#             myoRowTime = myoData[rowIndex,0]
+#             nextMyoRowTime = myoData[rowIndex+1,0]
+#             if (myoRowTime <= leapRowTime) and (nextMyoRowTime >= leapRowTime): # ie we've found the samples either side of the sample in the leap data
+#                 myoRowData = myoData[rowIndex,1:]
+#                 nextMyoRowData = myoData[rowIndex+1,1:]
+#                 myoGradient = (np.array(nextMyoRowData) - np.array(myoRowData))/(nextMyoRowTime-myoRowTime)
+#                 interpolatedMyoData = (myoGradient * (leapRowTime-myoRowTime)) + np.array(myoRowData)
+#                 combinedData.append(list(leapRow) + list(interpolatedMyoData))
+#             if myoRowTime >= leapRowTime and nextMyoRowTime >= leapRowTime: # somehow we've gone past it
+#                 break
+#
+#
+# if myoFs > leapFs:
+#     print("leap sampled slower, super sampling myo")
+#     combinedData = interpolateData(leapData, myoData)
+# else:
+#     print("myo sampled slower, super sampling leap")
+#     combinedData = interpolateData(myoData, leapData)
+#
+# dataToWrite = np.array(combinedData[0])
+#
+# for row in combinedData[1:]:
+#     dataToWrite = np.vstack((dataToWrite,row))
+#
+# np.savetxt("combinedData.csv", dataToWrite, delimiter=",")

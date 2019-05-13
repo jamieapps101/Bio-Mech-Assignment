@@ -1,5 +1,0 @@
-fileList.txt
-jamieLeft1.csv
-jamieLeft2.csv
-livLeft1.csv
-livLeft2.csv

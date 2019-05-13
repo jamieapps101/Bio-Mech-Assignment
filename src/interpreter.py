@@ -54,7 +54,24 @@ def proc_emg(emg, moving, times=[]):
             #print("emgDataList: {}".format(emgDataList))
             input_x = pd.DataFrame([emgDataList], columns = inputDataLabels)
             #print("input_x: {}".format(input_x))
-            output = classifier.predict(input_fn=lambda:eval_input_fn(input_x, labels=None,batch_size=100))
+            model1 = keras.Sequential([
+                #keras.layers.Flatten(input_shape=(1, 8)),
+                keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.2),
+                keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.2),
+                keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.2),
+                keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
+                keras.layers.BatchNormalization(),
+                keras.layers.Dropout(0.2),
+                keras.layers.Dense(2, activation=tf.nn.softmax)
+            ])
+            model.load_weights(checkpoint_path)
+            pre
             for a in output:
                 classID  = a['class_ids'][0]
                 print(classID)

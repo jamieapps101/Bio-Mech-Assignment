@@ -11,6 +11,7 @@ import numpy as np
 import Queue
 import warnings
 import os
+import csv
 
 
 class SampleListener(Leap.Listener):
@@ -22,6 +23,20 @@ class SampleListener(Leap.Listener):
         super(SampleListener,self).__init__()
         self.internalLockVariable = lockVariable
         self.internalQueue = q
+        self.filename = "trainingData/leapOutput.csv"
+        with open(self.filename, "w+") as outputFile:
+            writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            dataLabels = []
+            #for a in range(8):
+            dataLabels.append("time")
+
+            finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+            #bone_names = ['Metacarpal', 'Proximal', 'Intermediate', 'Distal']
+            bone_names = ['Proximal', 'Intermediate', 'Distal'] # 3 angles are calculated, which are considered to be at the bases of each bone
+            for a in finger_names:
+                for b in bone_names:
+                    dataLabels.append(a+"_"+b)
+            writer.writerow(dataLabels)
 
     def on_init(self, controller):
         print("Initialized")
@@ -68,6 +83,7 @@ class SampleListener(Leap.Listener):
 
     def on_frame(self, controller):
                 # Get the most recent frame and report some basic information
+                print("leap running")
                 frame = controller.frame()
                 if (len(frame.hands) == 0):
                     pass
@@ -104,11 +120,14 @@ class SampleListener(Leap.Listener):
                                 handAngles = np.concatenate((handAngles,fingerJointAngles),axis=0)
                             except ValueError:
                                 handAngles = fingerJointAngles
-                        try:
-                            self.internalQueue.put(handAngles,block=False)
-                            #print("send data to queue!")
-                        except Queue.Full:
-                            pass
+
+                        outputData = [int(time.time())*1000]
+                        outputData = outputData + list(handAngles.flatten())
+                        with open(self.filename, "a") as outputFile:
+                            writer = csv.writer(outputFile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                            writer.writerow(outputData)
+
+                        # write to file!
 
 def main():
     # Create a sample listener and controller

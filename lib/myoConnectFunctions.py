@@ -58,7 +58,7 @@ def multiord(b):
 class BT(object):
     '''Implements the non-Myo-specific details of the Bluetooth protocol.'''
     def __init__(self, tty):
-        self.ser = serial.Serial(port=tty, baudrate=9600, dsrdtr=1)
+        self.ser = serial.Serial(port=tty, baudrate=115200, dsrdtr=1)
         self.buf = []
         self.lock = threading.Lock()
         self.handlers = []
@@ -180,6 +180,7 @@ class MyoRaw(object):
         self.imu_handlers = []
         self.arm_handlers = []
         self.pose_handlers = []
+        self.lastTime = 0
         #self.dataCount = 0
 
     def detect_tty(self):
@@ -236,7 +237,7 @@ class MyoRaw(object):
             ## enable EMG data
             self.write_attr(0x28, b'\x01\x00')
             ## enable IMU data
-            self.write_attr(0x1d, b'\x01\x00')
+            #self.write_attr(0x1d, b'\x01\x00')
 
             ## Sampling rate of the underlying EMG sensor, capped to 1000. If it's
             ## less than 1000, emg_hz is correct. If it is greater, the actual
@@ -256,7 +257,6 @@ class MyoRaw(object):
         else:
             name = self.read_attr(0x03)
             print('device name: %s' % name.payload)
-
             ## enable IMU data
             self.write_attr(0x1d, b'\x01\x00')
             ## enable on/off arm notifications
@@ -378,6 +378,8 @@ class MyoRaw(object):
         self.arm_handlers.append(h)
 
     def on_emg(self, emg, moving):
+        #print(int(time.time()*1000)-self.lastTime)
+        #self.lastTime = time.time()*1000
         for h in self.emg_handlers:
             h(emg, moving)
 
