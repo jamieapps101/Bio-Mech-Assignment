@@ -18,6 +18,7 @@ from scipy import stats
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import signal
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size', default=10000, type=int, help='batch size')
@@ -59,90 +60,86 @@ def plot_history(histories, key='binary_crossentropy'):
 
 
 
-def amalgamateData(files=["outputLong01.csv"]):
-    totalData = np.array([8])
-    for file in files:
-        if files.index(file) == 0:
-            path = "trainingData/" + file
-            fileData = pd.read_csv(path)
-            totalData = fileData.to_numpy()
-        else:
-            path = "trainingData/" + file
-            fileData = pd.read_csv(path)
-            tempData = fileData.to_numpy()
-            totalData = np.concatenate((totalData,tempData),axis=0)# ie going down
+def amalgamateData():
+    path = "/home/jamie/storageDrive/Drive/Uni/Third Year/ACS340 - Biomechatronics/Bio-Mech Assignment Windows/src/trainingData/combinedData.csv"
+    fileData = pd.read_csv(path)
+    totalData = fileData.to_numpy()
     np.random.shuffle(totalData)
-    x = totalData[:,:8]
-    y = totalData[:,8:]
+    x = totalData[:,1:((5*8)+1)] #ignore time col, get 8*5 emg col
+    print("x shape: {}".format(x.shape))
+    y = totalData[:,-1] # get last col
+    print("y shape: {}".format(y.shape))
     return x,y
 
 def processData(x,y):
     #x = np.divide(x,1024)
-    y = y[:,1:] # to eliminate nan
-    y = y[:,3:6] # look only at Index_Proximal Index_Intermediate,Index_Distal (end not inclusive)
-    y = y.mean(axis=1)
-    length = y.size
-    print("Using {} samples".format(length))
-    A = y.reshape(length,1)
-    B = []
-    meanData = y.mean()
-    print("mean angle: {}".format(y.mean()))
-    print("median angle: {}".format(np.median(y)))
-    print("mode angle: {}".format(stats.mode(y)))
+    #y = y[:,1:] # to eliminate nan
+    #y = y[:,3:6] # look only at Index_Proximal Index_Intermediate,Index_Distal (end not inclusive)
+    #y = y.mean(axis=1)
+    #length = y.size
+    #print("Using {} samples".format(length))
+    #A = y.reshape(length,1)
+    #B = []
+    #meanData = y.mean()
+    #print("mean angle: {}".format(y.mean()))
+    #print("median angle: {}".format(np.median(y)))
+    #print("mode angle: {}".format(stats.mode(y)))
     #plt.figure(1)
     #sns.distplot(y) # for plotting initial data distribution
     #return x,y
-    yMax = np.max(y)
-    y = np.divide(y,yMax) # normalise
+    #yMax = np.max(y)
+    #y = np.divide(y,yMax) # normalise
     bins = 10
-    y = np.multiply(y,bins-1)
-    y = np.round(y)
-    print("mean angle translated: {}".format(y.mean()))
-    dataBins = [[],[],[],[],[],[],[],[],[],[]]
-    tempBin = []
-    sizes = []
-    y = y.reshape(len(y),1)
-    data = np.append(x,y,axis=1)
-    print("mean angle translated: {}".format(data[:,8].mean()))
+    #y = np.multiply(y,bins-1)
+    #y = np.round(y)
+    #print("mean angle translated: {}".format(y.mean()))
+    #dataBins = [[],[],[],[],[],[],[],[],[],[]]
+    #tempBin = []
+    #sizes = []
+    #y = y.reshape(len(y),1)
+    #data = np.append(x,y,axis=1)
+    #print("mean angle translated: {}".format(data[:,8].mean()))
     #for a in range(bins):
         #print("a = {}".format(a))
-    for sample in data:
-        dataBins[int(sample[8])].append(sample)
-    sum = 0
-    for bin in dataBins:
-        print(len(bin))
-        sum += len(bin)
+#    for sample in data:
+    #   dataBins[int(sample[8])].append(sample)
+    #sum = 0
+    #for bin in dataBins:
+        #print(len(bin))
+        #sum += len(bin)
 
-    print("Total: {}".format(sum))
-    newSamples = 20000
-    newData = [] # np.array([]).reshape(0,9)
-    #print("newData shape:{}".format(newData.shape))
-    sampleIndexes = np.random.randint(bins,size=newSamples)
-    print("mean index = {}".format(np.mean(sampleIndexes)))
-    for sampleIndex in sampleIndexes:
-        sampleBin = dataBins[sampleIndex]
-        if len(sampleBin) != 0:
-            sampleNumber = np.random.randint(len(sampleBin))
-            sample = sampleBin[sampleNumber]
-            newData.append(sample)
-    newData = np.array(newData).astype(np.int64)
-    print("newData shape; {}".format(newData.shape))
-    print("newData distplot shape; {}".format(newData[:,8].shape))
-    print("newData example: \n{}".format(newData[:4,:]))
-    print("classification mean: {}".format(np.mean(newData[:,8])))
-    #plt.figure(2)
-    # sns.distplot(newData[:,8]) # for fitting corrected distribution
+    # print("Total: {}".format(sum))
+    # newSamples = 20000
+    # newData = [] # np.array([]).reshape(0,9)
+    # #print("newData shape:{}".format(newData.shape))
+    # sampleIndexes = np.random.randint(bins,size=newSamples)
+    # print("mean index = {}".format(np.mean(sampleIndexes)))
+    # for sampleIndex in sampleIndexes:
+    #     sampleBin = dataBins[sampleIndex]
+    #     if len(sampleBin) != 0:
+    #         sampleNumber = np.random.randint(len(sampleBin))
+    #         sample = sampleBin[sampleNumber]
+    #         newData.append(sample)
+    # newData = np.array(newData).astype(np.int64)
+    # print("newData shape; {}".format(newData.shape))
+    # print("newData distplot shape; {}".format(newData[:,8].shape))
+    # print("newData example: \n{}".format(newData[:4,:]))
+    # print("classification mean: {}".format(np.mean(newData[:,8])))
+    # #plt.figure(2)
+     #sns.distplot(newData[:,8]) # for fitting corrected distribution
     #plt.show()
-    x = newData[:,:8]
-    y = newData[:,8:]
+    # x = newData[:,:8]
+    # y = newData[:,8:]
 
     newY = []
     for sample in y:
-        if sample > (bins-1)/2:
-            newY.append(1)
-        else:
-            newY.append(0)
+        # if sample > (bins-1)/2:
+        #     newY.append(1)
+        # else:
+        #     newY.append(0)
+        newY.append(int(sample/3))
     y = np.array(newY)
+    sns.distplot(y) # for fitting corrected distribution
     return x,y
     # exit()
 
@@ -181,13 +178,15 @@ def main(argv):
     my_feature_columns = []
     inputDataLabels = []
     for a in range(8):
-        inputDataLabels.append("emg"+str(a))
+        for b in range(5):
+            inputDataLabels.append("emg"+str(a)+"fft"+str(b))
 
     outputDataLabels = ['aveAngle']
     for key in inputDataLabels:
         my_feature_columns.append(tf.feature_column.numeric_column(key=key))
 
     accuracies = []
+    #path = "/home/jamie/storageDrive/Drive/Uni/Third Year/ACS340 - Biomechatronics/Bio-Mech Assignment Windows/src/trainingData/combinedData.csv"
     dataX,dataY = amalgamateData() # maybe search through .csv files in trainingData folder
     dataX,dataY = processData(dataX,dataY)
     print("dataY mean:{}".format(dataY.mean()))
@@ -211,7 +210,8 @@ def main(argv):
     print("shape: {}".format(train_y.shape))
     print("shape: {}".format(test_x.shape))
     print("shape: {}".format(test_y.shape))
-
+    plt.show()
+    time.sleep(5)
 #    structures = [[50],[100],[150],[200],[250],[300],[350],[400],[450],[500],
 #                [50,50],[100,100],[200,200],[250,250],[300,300],[400,400]]
 #                [0.685063, 0.68686265, 0.68326336, 0.71025795, 0.69526094, 0.7006599, 0.69286144, 0.7024595, 0.7132574, 0.7132574, 0.71385723, 0.72645473, 0.7306539, 0.7396521, 0.7324535, 0.73425317]
@@ -236,7 +236,7 @@ def main(argv):
         # print('\nTest set accuracy: {}\n'.format(val))
     model1 = keras.Sequential([
         #keras.layers.Flatten(input_shape=(1, 8)),
-        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(8,)),
+        keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002), activation=tf.nn.relu,input_shape=(40,)),
         keras.layers.BatchNormalization(),
         keras.layers.Dropout(0.2),
         keras.layers.Dense(100, kernel_regularizer=keras.regularizers.l2(0.002),activation=tf.nn.relu),
@@ -294,6 +294,7 @@ def main(argv):
     model3.compile(optimizer='adam',
         loss='sparse_categorical_crossentropy',
         metrics=['accuracy','binary_crossentropy'])
+    tf.logging.set_verbosity(tf.logging.ERROR)
     #model1.summary()
     history1 = model1.fit(train_x, train_y, epochs=500,batch_size=20000,validation_data=(test_x, test_y),verbose=2, callbacks=[cp_callback])
     #history2 = model2.fit(train_x, train_y, epochs=600,batch_size=20000,validation_data=(test_x, test_y),verbose=2)
